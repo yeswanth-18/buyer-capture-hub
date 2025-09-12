@@ -163,7 +163,6 @@ export default function BuyerList() {
                 <SelectValue placeholder="All Cities" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Cities</SelectItem>
                 <SelectItem value="Chandigarh">Chandigarh</SelectItem>
                 <SelectItem value="Mohali">Mohali</SelectItem>
                 <SelectItem value="Zirakpur">Zirakpur</SelectItem>
@@ -177,7 +176,6 @@ export default function BuyerList() {
                 <SelectValue placeholder="Property Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
                 <SelectItem value="Apartment">Apartment</SelectItem>
                 <SelectItem value="Villa">Villa</SelectItem>
                 <SelectItem value="Plot">Plot</SelectItem>
@@ -191,7 +189,6 @@ export default function BuyerList() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
                 <SelectItem value="New">New</SelectItem>
                 <SelectItem value="Qualified">Qualified</SelectItem>
                 <SelectItem value="Contacted">Contacted</SelectItem>
@@ -207,7 +204,6 @@ export default function BuyerList() {
                 <SelectValue placeholder="Timeline" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Timelines</SelectItem>
                 <SelectItem value="0-3m">0-3 months</SelectItem>
                 <SelectItem value="3-6m">3-6 months</SelectItem>
                 <SelectItem value=">6m">&gt;6 months</SelectItem>
