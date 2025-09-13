@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SimpleBuyerForm } from "@/components/SimpleBuyerForm";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import type { CreateBuyerInput } from "@/lib/validations";
 
 export default function NewBuyer() {
@@ -12,10 +13,23 @@ export default function NewBuyer() {
   const handleSubmit = async (data: CreateBuyerInput) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log("Creating new buyer:", data);
+      const { error } = await supabase.from('buyers').insert({
+        full_name: data.fullName,
+        email: data.email || null,
+        phone: data.phone,
+        city: data.city,
+        property_type: data.propertyType,
+        bhk: data.bhk || null,
+        purpose: data.purpose,
+        budget_min: data.budgetMin || null,
+        budget_max: data.budgetMax || null,
+        timeline: data.timeline,
+        source: data.source,
+        notes: data.notes || null,
+        tags: data.tags || [],
+      } as any);
+
+      if (error) throw error;
       
       toast({
         title: "Success!",
@@ -24,10 +38,10 @@ export default function NewBuyer() {
       });
       
       navigate("/buyers");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create lead. Please try again.",
+        description: error.message || "Failed to create lead. Please try again.",
         variant: "destructive",
       });
     } finally {

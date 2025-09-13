@@ -7,8 +7,10 @@ import {
   Home, 
   Upload, 
   Download,
-  Building2
+  Building2,
+  LogOut
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -16,6 +18,7 @@ interface MainLayoutProps {
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
+  const { signOut } = useAuth();
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: Home },
@@ -32,7 +35,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               <Link to="/" className="flex items-center space-x-2">
                 <Building2 className="h-8 w-8 text-primary" />
                 <span className="text-xl font-bold text-foreground">LeadFlow</span>
-                <Badge variant="secondary" className="ml-2">Demo</Badge>
               </Link>
             </div>
             
@@ -63,6 +65,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-2" />
                   Export
+                </Button>
+                <Button variant="ghost" size="sm" onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
                 </Button>
               </div>
             </div>

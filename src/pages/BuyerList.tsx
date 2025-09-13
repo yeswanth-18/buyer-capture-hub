@@ -22,7 +22,8 @@ import {
   Upload,
   Plus
 } from "lucide-react";
-import { demoBuyers, getStatusColor, formatBudget } from "@/lib/demo-data";
+import { useBuyers } from "@/hooks/useBuyers";
+import { getStatusColor, formatBudget } from "@/lib/demo-data";
 import type { BuyerFilters } from "@/types/buyer";
 
 const ITEMS_PER_PAGE = 10;
@@ -41,42 +42,12 @@ export default function BuyerList() {
     page: parseInt(searchParams.get("page") || "1"),
   };
 
-  // Filter and paginate data
-  const filteredBuyers = useMemo(() => {
-    let filtered = demoBuyers;
+  const { buyers, loading } = useBuyers(filters);
 
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(buyer => 
-        buyer.fullName.toLowerCase().includes(searchLower) ||
-        buyer.phone.includes(filters.search!) ||
-        buyer.email?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    if (filters.city) {
-      filtered = filtered.filter(buyer => buyer.city === filters.city);
-    }
-
-    if (filters.propertyType) {
-      filtered = filtered.filter(buyer => buyer.propertyType === filters.propertyType);
-    }
-
-    if (filters.status) {
-      filtered = filtered.filter(buyer => buyer.status === filters.status);
-    }
-
-    if (filters.timeline) {
-      filtered = filtered.filter(buyer => buyer.timeline === filters.timeline);
-    }
-
-    return filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  }, [filters]);
-
-  const totalPages = Math.ceil(filteredBuyers.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(buyers.length / ITEMS_PER_PAGE);
   const currentPage = filters.page || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedBuyers = filteredBuyers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedBuyers = buyers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const updateFilter = (key: keyof BuyerFilters, value: string | undefined) => {
     const newParams = new URLSearchParams(searchParams);
@@ -105,6 +76,16 @@ export default function BuyerList() {
     setSearchInput("");
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <p className="text-lg">Loading your leads...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -112,7 +93,7 @@ export default function BuyerList() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Buyer Leads</h1>
           <p className="text-muted-foreground">
-            {filteredBuyers.length} leads found
+            {buyers.length} leads found
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -225,94 +206,103 @@ export default function BuyerList() {
       {/* Results Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Budget</TableHead>
-                  <TableHead>Timeline</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Updated</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedBuyers.map((buyer) => (
-                  <TableRow key={buyer.id} className="hover:bg-accent/50">
-                    <TableCell className="font-medium">
-                      <div>
-                        <div>{buyer.fullName}</div>
-                        {buyer.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {buyer.tags.slice(0, 2).map((tag, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                            {buyer.tags.length > 2 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{buyer.tags.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{buyer.phone}</div>
-                        {buyer.email && (
-                          <div className="text-muted-foreground">{buyer.email}</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{buyer.city}</TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{buyer.propertyType}</div>
-                        {buyer.bhk && (
-                          <div className="text-muted-foreground">{buyer.bhk}BHK</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{formatBudget(buyer.budgetMin, buyer.budgetMax)}</div>
-                        <div className="text-muted-foreground">{buyer.purpose}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{buyer.timeline}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(buyer.status)} variant="secondary">
-                        {buyer.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(buyer.updatedAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Link to={`/buyers/${buyer.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link to={`/buyers/${buyer.id}/edit`}>
-                          <Button variant="ghost" size="sm">
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </TableCell>
+          {buyers.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">No leads found.</p>
+              <Link to="/buyers/new">
+                <Button>Create Your First Lead</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Budget</TableHead>
+                    <TableHead>Timeline</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Updated</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {paginatedBuyers.map((buyer) => (
+                    <TableRow key={buyer.id} className="hover:bg-accent/50">
+                      <TableCell className="font-medium">
+                        <div>
+                          <div>{buyer.full_name}</div>
+                          {buyer.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {buyer.tags.slice(0, 2).map((tag, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                              {buyer.tags.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{buyer.tags.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{buyer.phone}</div>
+                          {buyer.email && (
+                            <div className="text-muted-foreground">{buyer.email}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{buyer.city}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{buyer.property_type}</div>
+                          {buyer.bhk && (
+                            <div className="text-muted-foreground">{buyer.bhk}BHK</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{formatBudget(buyer.budget_min, buyer.budget_max)}</div>
+                          <div className="text-muted-foreground">{buyer.purpose}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{buyer.timeline}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(buyer.status)} variant="secondary">
+                          {buyer.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(buyer.updated_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Link to={`/buyers/${buyer.id}`}>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Link to={`/buyers/${buyer.id}/edit`}>
+                            <Button variant="ghost" size="sm">
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
