@@ -20,17 +20,35 @@ import {
   Edit2,
   Download,
   Upload,
-  Plus
+  Plus,
+  FileDown
 } from "lucide-react";
 import { useBuyers } from "@/hooks/useBuyers";
 import { getStatusColor, formatBudget } from "@/lib/demo-data";
+import { useImportExport } from "@/hooks/useImportExport";
 import type { BuyerFilters } from "@/types/buyer";
+import { useRef } from "react";
 
 const ITEMS_PER_PAGE = 10;
 
 export default function BuyerList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
+  const { importing, exporting, handleExport, handleImport, handleTemplateDownload } = useImportExport();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImport(file);
+    }
+    // Reset the input
+    e.target.value = '';
+  };
 
   // Get filters from URL
   const filters: BuyerFilters = {
@@ -97,13 +115,38 @@ export default function BuyerList() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleImportClick}
+            disabled={importing}
+          >
             <Upload className="h-4 w-4 mr-2" />
-            Import CSV
+            {importing ? "Importing..." : "Import CSV"}
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleExport}
+            disabled={exporting}
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export
+            {exporting ? "Exporting..." : "Export"}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleTemplateDownload}
+          >
+            <FileDown className="h-4 w-4 mr-2" />
+            Template
           </Button>
           <Link to="/buyers/new">
             <Button className="flex items-center gap-2">

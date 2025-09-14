@@ -8,9 +8,12 @@ import {
   Upload, 
   Download,
   Building2,
-  LogOut
+  LogOut,
+  FileDown
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useImportExport } from "@/hooks/useImportExport";
+import { useRef } from "react";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -19,6 +22,21 @@ interface MainLayoutProps {
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const { signOut } = useAuth();
+  const { importing, exporting, handleExport, handleImport, handleTemplateDownload } = useImportExport();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImport(file);
+    }
+    // Reset the input
+    e.target.value = '';
+  };
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: Home },
@@ -58,13 +76,38 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               })}
               
               <div className="flex items-center space-x-2 ml-4 pl-4 border-l border-border">
-                <Button variant="outline" size="sm">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleImportClick}
+                  disabled={importing}
+                >
                   <Upload className="h-4 w-4 mr-2" />
-                  Import CSV
+                  {importing ? "Importing..." : "Import CSV"}
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleExport}
+                  disabled={exporting}
+                >
                   <Download className="h-4 w-4 mr-2" />
-                  Export
+                  {exporting ? "Exporting..." : "Export"}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleTemplateDownload}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Template
                 </Button>
                 <Button variant="ghost" size="sm" onClick={signOut}>
                   <LogOut className="h-4 w-4 mr-2" />
